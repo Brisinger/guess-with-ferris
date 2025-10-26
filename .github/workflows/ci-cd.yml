@@ -35,7 +35,12 @@ jobs:
           exit 1
         fi
 
-        # Install additional Rust components (fallback if mise doesn't install them)
+        # Ensure mise shims are in PATH
+        echo "\n=== Setting up PATH ==="
+        echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+        # Install additional Rust components explicitly (fallback)
         echo "\n=== Installing Rust components ==="
         if command -v rustup >/dev/null 2>&1; then
           echo "rustup found, ensuring components are installed..."
@@ -44,6 +49,10 @@ jobs:
         else
           echo "⚠️  rustup not found, components may not be available"
         fi
+
+        # Refresh mise shims
+        echo "\n=== Refreshing mise shims ==="
+        mise reshim || echo "⚠️  Failed to reshim"
 
         # Verify installation
         echo "\n=== Rust Toolchain ==="
@@ -55,13 +64,17 @@ jobs:
         which rustc || (echo "❌ rustc not found in PATH" && exit 1)
         which cargo || (echo "❌ cargo not found in PATH" && exit 1)
         which rustfmt && echo "✅ rustfmt found" || echo "⚠️  rustfmt not found in PATH"
-        which clippy && echo "✅ clippy found" || echo "⚠️  clippy not found in PATH"
+        which cargo-clippy && echo "✅ cargo-clippy found" || echo "⚠️  cargo-clippy not found in PATH"
 
-        # Test that tools work
+        # Test that tools work (clippy is a cargo subcommand, not standalone)
         echo "\n=== Testing Tools ==="
         rustfmt --version || echo "⚠️  rustfmt not working"
         cargo fmt --version || echo "⚠️  cargo fmt not working"
         cargo clippy --version || echo "⚠️  cargo clippy not working"
+
+        # Show PATH for debugging
+        echo "\n=== PATH ==="
+        echo $PATH
     
     - name: Trust mise.toml
       run: |
