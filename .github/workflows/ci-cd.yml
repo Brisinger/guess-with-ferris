@@ -23,14 +23,32 @@ jobs:
         cache: true
     
     - name: Setup Rust with mise
+      env:
+        MISE_CONFIG_FILE: ${{ github.workspace }}/mise.toml
       run: |
-        # Install Rust using mise
-        mise install
-        # Add mise shims to PATH
+        # Ensure mise is in PATH
         echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+        # Verify mise is available
+        echo "=== Mise Version ==="
+        mise --version
+        # Show mise.toml location and contents
+        echo "\n=== Using mise.toml ==="
+        echo "Config file: $MISE_CONFIG_FILE"
+        cat $MISE_CONFIG_FILE | grep -v '^#' | grep -v '^$'
+        # Install Rust and components using mise
+        echo "\n=== Installing Rust and components ==="
+        cd ${{ github.workspace }} && mise use -y
         # Verify installation
+        echo "\n=== Rust Toolchain ==="
         rustc --version
         cargo --version
+        echo "\n=== Rust Components ==="
+        mise which rustc
+        mise which cargo
+        mise which rustfmt
+        mise which cargo-clippy
+        echo "\n=== Versions ==="
+        rustfmt --version
         cargo fmt --version
         cargo clippy --version
     
