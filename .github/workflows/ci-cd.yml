@@ -24,23 +24,20 @@ jobs:
     
     - name: Setup Rust with mise
       run: |
-        # Install and use the specified Rust version
-        mise install rust@1.85.0
-        # Add mise to PATH for subsequent steps
+        # Install Rust using mise
+        mise install
+        # Add mise shims to PATH
         echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
         # Verify installation
         rustc --version
         cargo --version
+        cargo fmt --version
+        cargo clippy --version
     
     - name: Trust mise.toml
       run: |
         chmod +x scripts/trust-mise.sh
         ./scripts/trust-mise.sh
-    
-    - name: Install project dependencies
-      run: |
-        # Install project-specific tools and dependencies
-        mise install
     
     - name: Run CI tasks with mise
       run: |
