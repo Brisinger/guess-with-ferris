@@ -78,7 +78,7 @@ depends = ["clean", "format", "check"]
 env = { RUST_BACKTRACE = "1" }                    # show backtrace on error
 # Fix any lint warnings with clippy component
 run = """
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 cargo clippy --allow-dirty --allow-staged --fix # Linting and fix lint warnings
 """
 alias = "lint"
