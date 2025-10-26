@@ -22,20 +22,24 @@ jobs:
         install: true
         cache: true
     
-    - name: Install Rust with mise
+    - name: Setup Rust with mise
       run: |
-        # This will install the Rust version specified in mise.toml (1.85.0)
-        mise use rust@1.85.0
+        # Install and use the specified Rust version
         mise install rust@1.85.0
+        # Add mise to PATH for subsequent steps
+        echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+        # Verify installation
+        rustc --version
+        cargo --version
     
     - name: Trust mise.toml
       run: |
         chmod +x scripts/trust-mise.sh
         ./scripts/trust-mise.sh
     
-    - name: Setup environment
+    - name: Install project dependencies
       run: |
-        mise use
+        # Install project-specific tools and dependencies
         mise install
     
     - name: Run CI tasks with mise
