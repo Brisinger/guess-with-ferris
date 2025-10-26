@@ -35,6 +35,16 @@ jobs:
           exit 1
         fi
 
+        # Install additional Rust components (fallback if mise doesn't install them)
+        echo "\n=== Installing Rust components ==="
+        if command -v rustup >/dev/null 2>&1; then
+          echo "rustup found, ensuring components are installed..."
+          rustup component add rustfmt || echo "⚠️  Failed to install rustfmt"
+          rustup component add clippy || echo "⚠️  Failed to install clippy"
+        else
+          echo "⚠️  rustup not found, components may not be available"
+        fi
+
         # Verify installation
         echo "\n=== Rust Toolchain ==="
         rustc --version
@@ -44,14 +54,14 @@ jobs:
         echo "\n=== Rust Components ==="
         which rustc || (echo "❌ rustc not found in PATH" && exit 1)
         which cargo || (echo "❌ cargo not found in PATH" && exit 1)
-        which rustfmt || echo "⚠️  rustfmt not found in PATH"
+        which rustfmt && echo "✅ rustfmt found" || echo "⚠️  rustfmt not found in PATH"
         which clippy && echo "✅ clippy found" || echo "⚠️  clippy not found in PATH"
 
         # Test that tools work
         echo "\n=== Testing Tools ==="
-        rustfmt --version
-        cargo fmt --version
-        cargo clippy --version || echo "⚠️  cargo clippy not available"
+        rustfmt --version || echo "⚠️  rustfmt not working"
+        cargo fmt --version || echo "⚠️  cargo fmt not working"
+        cargo clippy --version || echo "⚠️  cargo clippy not working"
     
     - name: Trust mise.toml
       run: |

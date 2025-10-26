@@ -22,7 +22,7 @@ min_version = "2025.10.18"
 # mise.path = "./node_modules/.bin" # add a directory to PATH
 #
 [tools]
-"rust" = { version = "1.85.0", profile = "default" }
+"rust" = { version = "1.85.0", profile = "default", components = "rustfmt,clippy" }
 # terraform = '1.0.0'       # specify a single version
 # erlang = '26'             # specify a major version only
 # node = 'ref:master'       # build from a git ref
@@ -87,7 +87,7 @@ alias = "lint"
 description = "Build the Cargo project"
 depends = ["check", "lint"]
 run = "cargo build --release"
-sources = ['Cargo.toml', 'src/**/*.rs'] # recompile when these files change
+sources = ['Cargo.toml', 'src/**/*.rs']    # recompile when these files change
 outputs = ['target/release/guessing_game']
 alias = "b"
 
