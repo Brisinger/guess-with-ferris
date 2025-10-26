@@ -1,0 +1,76 @@
+name: CI/CD Pipeline To Build and Release the Guessing Game
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Mise and Dependencies
+      uses: jdx/mise-action@v2
+      with:
+        version: "2025.10.18"
+        install: true
+        cache: true
+    
+    - name: Install Rust with mise
+      run: |
+        # This will install the Rust version specified in mise.toml (1.85.0)
+        mise use rust@1.85.0
+        mise install rust@1.85.0
+    
+    - name: Trust mise.toml
+      run: |
+        chmod +x scripts/trust-mise.sh
+        ./scripts/trust-mise.sh
+    
+    - name: Setup environment
+      run: |
+        mise use
+        mise install
+    
+    - name: Run CI tasks with mise
+      run: |
+        # Run the 'ci' task which includes check, lint, and build
+        mise run ci
+    
+    - name: Upload release binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: guessing-game
+        path: target/release/guessing_game
+        if-no-files-found: error
+        retention-days: 1
+    
+    - name: Generate build summary
+      if: always()
+      run: |
+        echo "# Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Build Information" >> $GITHUB_STEP_SUMMARY
+        echo "- **Rust Version:** $(rustc --version)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Cargo Version:** $(cargo --version)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Profile:** Release" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Tools:** Using mise for dependency and task management" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Tasks Performed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Format: Ensured code is properly formatted" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Lint: Checked code with clippy" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Build: Created optimized release binary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Binary: `guessing_game` (uploaded as workflow artifact)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download the binary from the 'Artifacts' section" >> $GITHUB_STEP_SUMMARY
+        echo "2. Make the binary executable: `chmod +x guessing_game`" >> $GITHUB_STEP_SUMMARY
+        echo "3. Run the program: `./guessing_game`" >> $GITHUB_STEP_SUMMARY
