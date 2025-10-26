@@ -17,40 +17,41 @@ jobs:
     
     - name: Install Mise and Dependencies
       uses: jdx/mise-action@v2
-      with:
-        version: "2025.10.18"
-        install: true
-        cache: true
     
     - name: Setup Rust with mise
-      env:
-        MISE_CONFIG_FILE: ${{ github.workspace }}/mise.toml
       run: |
-        # Ensure mise is in PATH
-        echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
-        # Verify mise is available
+        # Verify mise is available (should be handled by mise-action)
         echo "=== Mise Version ==="
         mise --version
-        # Show mise.toml location and contents
+
+        # Show mise.toml contents
         echo "\n=== Using mise.toml ==="
-        echo "Config file: $MISE_CONFIG_FILE"
-        cat $MISE_CONFIG_FILE | grep -v '^#' | grep -v '^$'
+        cat mise.toml | grep -v '^#' | grep -v '^$'
+
         # Install Rust and components using mise
         echo "\n=== Installing Rust and components ==="
-        cd ${{ github.workspace }} && mise use -y
+        if ! mise install; then
+          echo "❌ Failed to install tools with mise"
+          exit 1
+        fi
+
         # Verify installation
         echo "\n=== Rust Toolchain ==="
         rustc --version
         cargo --version
+
+        # Verify components are available
         echo "\n=== Rust Components ==="
-        mise which rustc
-        mise which cargo
-        mise which rustfmt
-        mise which cargo-clippy
-        echo "\n=== Versions ==="
+        which rustc || (echo "❌ rustc not found in PATH" && exit 1)
+        which cargo || (echo "❌ cargo not found in PATH" && exit 1)
+        which rustfmt || echo "⚠️  rustfmt not found in PATH"
+        which clippy && echo "✅ clippy found" || echo "⚠️  clippy not found in PATH"
+
+        # Test that tools work
+        echo "\n=== Testing Tools ==="
         rustfmt --version
         cargo fmt --version
-        cargo clippy --version
+        cargo clippy --version || echo "⚠️  cargo clippy not available"
     
     - name: Trust mise.toml
       run: |
@@ -60,15 +61,36 @@ jobs:
     - name: Run CI tasks with mise
       run: |
         # Run the 'ci' task which includes check, lint, and build
-        mise run ci
+        echo "=== Running CI tasks ==="
+        if ! mise run ci; then
+          echo "❌ CI tasks failed"
+          echo "Available mise tasks:"
+          mise tasks
+          exit 1
+        fi
+        echo "✅ CI tasks completed successfully"
     
+    - name: Verify binary exists
+      run: |
+        echo "=== Checking for release binary ==="
+        ls -la target/release/
+        if [ ! -f "target/release/guessing_game" ]; then
+          echo "❌ Binary not found at target/release/guessing_game"
+          echo "Available files:"
+          find target -name "*" -type f 2>/dev/null || echo "No files found in target directory"
+          exit 1
+        else
+          echo "✅ Binary found at target/release/guessing_game"
+          echo "Binary size: $(stat -c%s target/release/guessing_game) bytes"
+        fi
+
     - name: Upload release binary
       uses: actions/upload-artifact@v4
       with:
-        name: guessing-game
+        name: guessing-game-${{ github.run_number }}
         path: target/release/guessing_game
         if-no-files-found: error
-        retention-days: 1
+        retention-days: 7
     
     - name: Generate build summary
       if: always()
@@ -87,7 +109,7 @@ jobs:
         echo "- ✅ Build: Created optimized release binary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
-        echo "- Binary: `guessing_game` (uploaded as workflow artifact)" >> $GITHUB_STEP_SUMMARY
+        echo "- Binary: \`guessing_game\` (uploaded as artifact: guessing-game-${{ github.run_number }})" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "1. Download the binary from the 'Artifacts' section" >> $GITHUB_STEP_SUMMARY

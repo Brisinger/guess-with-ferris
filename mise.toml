@@ -88,11 +88,10 @@ description = "Build the Cargo project"
 depends = ["check", "lint"]
 run = "cargo build --release"
 sources = ['Cargo.toml', 'src/**/*.rs'] # recompile when these files change
-outputs = ['target/release/hello_cargo']
+outputs = ['target/release/guessing_game']
 alias = "b"
 
 [tasks.ci] # only dependencies to be run
 description = "Run CI tasks"
 depends = ["check", "lint", "build"]
 alias = "ci"
-
