@@ -158,8 +158,10 @@ mise which cargo
 
 ## 📜 License
 
+This project is licensed under the [Apache License 2.0](LICENSE).
+
 ```
-   Copyright 2025 Your Name
+   Copyright 2025 Shubhojit Dasgupta
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
